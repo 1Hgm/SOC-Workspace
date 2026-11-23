@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.venv
+__pycache__
+*.pyc
+*.pyproj
+SOC_Scribe.py
+response_cache.json
+score_cache.json
+ioc_cache.json
+intel_snapshot.json
+test-screenshots

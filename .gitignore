@@ -1,0 +1,9 @@
+# secrets and local data: never commit these
+.env
+response_cache.json
+score_cache.json
+ioc_cache.json
+intel_snapshot.json
+.venv/
+__pycache__/
+*.pyc

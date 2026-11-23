@@ -1,0 +1,21 @@
+# Hosting configuration for the public site. Local use creates its own copy of the theme only.
+[theme]
+base = "dark"
+primaryColor = "#6FD6E0"
+backgroundColor = "#0F1522"
+secondaryBackgroundColor = "#151F33"
+textColor = "#E6ECF5"
+
+[server]
+headless = true
+maxUploadSize = 5            # MB. Screenshots and workspace files only
+enableXsrfProtection = true
+fileWatcherType = "none"
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"       # hides developer menu items from visitors
+showErrorDetails = "none"    # never show stack traces or server paths to visitors
