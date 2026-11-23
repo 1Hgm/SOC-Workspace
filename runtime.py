@@ -14,16 +14,26 @@ import os
 _TRUE = ("1", "true", "yes", "on")
 
 
+def _on_streamlit_cloud(path=None):
+    """Streamlit Community Cloud runs apps from /mount/src/<repo>. Treat that as a hosted, public deployment."""
+    here = (path or os.path.abspath(__file__)).replace("\\", "/")
+    return here.startswith("/mount/src/")
+
+
 def _detect_public():
     """Public mode is switched on by, in order:
       1. the SOC_PUBLIC_MODE environment variable (an explicit 0/false also wins)
       2. running on Google Cloud Run (it sets K_SERVICE), so a deploy there is safe by default
-      3. SOC_PUBLIC_MODE in Streamlit's Secrets (Streamlit Community Cloud)
+      3. running on Streamlit Community Cloud (the app lives under /mount/src/), so a forgotten
+         secret can never leave a public site in local mode
+      4. SOC_PUBLIC_MODE in Streamlit's Secrets
     """
     explicit = os.getenv("SOC_PUBLIC_MODE")
     if explicit is not None and explicit.strip() != "":
         return explicit.strip().lower() in _TRUE
     if os.getenv("K_SERVICE"):
+        return True
+    if _on_streamlit_cloud():
         return True
     try:
         import streamlit as st

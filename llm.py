@@ -54,6 +54,20 @@ def client(api_key=None):
     return _client
 
 
+def _release(c, api_key):
+    """Close a client we created for one call (public mode). The shared local client stays open.
+
+    google-genai closes its HTTP connection when a Client object is garbage collected, so a
+    client created inline would be closed mid-stream. We keep a reference for the whole call
+    and close it ourselves afterwards.
+    """
+    if api_key:
+        try:
+            c.close()
+        except Exception:
+            pass  # test fakes and older SDKs may not have close()
+
+
 def _msg(err):
     return str(err).lower()
 
@@ -88,16 +102,20 @@ def fallbacks(api_key=None):
     if not names:
         try:
             found = []
-            for m in client(api_key).models.list():
-                n = (m.name or "").removeprefix("models/")
-                actions = getattr(m, "supported_actions", None) or []
-                if (
-                    "flash" in n
-                    and n != MODEL
-                    and "generateContent" in actions
-                    and not any(w in n for w in SKIP_WORDS)
-                ):
-                    found.append(n)
+            c = client(api_key)   # keep a reference while the model list is read
+            try:
+                for m in c.models.list():
+                    n = (m.name or "").removeprefix("models/")
+                    actions = getattr(m, "supported_actions", None) or []
+                    if (
+                        "flash" in n
+                        and n != MODEL
+                        and "generateContent" in actions
+                        and not any(w in n for w in SKIP_WORDS)
+                    ):
+                        found.append(n)
+            finally:
+                _release(c, api_key)
             stable = sorted([n for n in found if "preview" not in n and "exp" not in n], reverse=True)
             other = sorted([n for n in found if n not in stable], reverse=True)
             names = (stable + other)[:2]
@@ -129,8 +147,10 @@ def stream(contents, model=None, on_status=None, api_key=None, info=None, **cfg)
         for attempt in range(3):
             use = _thinking_ok
             got_any = False
+            c = None
             try:
-                for chunk in client(api_key).models.generate_content_stream(
+                c = client(api_key)   # keep this reference until the stream is finished
+                for chunk in c.models.generate_content_stream(
                     model=name, contents=contents, config=_config(use, cfg)
                 ):
                     got_any = True
@@ -154,6 +174,9 @@ def stream(contents, model=None, on_status=None, api_key=None, info=None, **cfg)
                 if _is_busy(e) or _is_quota(e):
                     break  # give up on this model, try the next one
                 raise  # real error (bad key, bad request...): show it
+            finally:
+                if c is not None:
+                    _release(c, api_key)   # closes only per-call clients, after the stream ends or fails
         if i == 0 and model is None:
             candidates += fallbacks(api_key)
         i += 1

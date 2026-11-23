@@ -9,7 +9,7 @@ useful for any SOC.
 
 | | Local (single user) | Public site (many users) |
 |---|---|---|
-| Turn on | default | `SOC_PUBLIC_MODE=1` (automatic on Google Cloud Run) |
+| Turn on | default | `SOC_PUBLIC_MODE=1` (turns on by itself on Google Cloud Run and Streamlit Community Cloud) |
 | AI key | `GEMINI_API_KEY` in `.env` | each analyst pastes their own key in the sidebar |
 | Stored on disk | caches and a news snapshot, for speed | **nothing** |
 | Send to ServiceNow, SOAR, Slack | yes, credentials in `.env` | off (credentials would have to live on the server) |
@@ -51,7 +51,7 @@ python -m streamlit run app.py
    SOC_PUBLIC_MODE = "1"
    ```
 4. Deploy. Your site is `https://<name>.streamlit.app`.
-5. Open it and confirm you see the **Public workspace** strip at the top. If you do not, public mode is off.
+5. Open it and confirm you see the **Public workspace** strip at the top and an **AI access** key box in the sidebar. The app also switches public mode on by itself on Community Cloud as a safeguard, but keep the secret so it is explicit.
 
 Good to know: about 1 GB of memory shared by all visitors, the app sleeps after 12 hours without traffic (the next
 visitor wakes it in a moment), no custom domain, and limits can change at any time.
